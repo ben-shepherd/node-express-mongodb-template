@@ -2,16 +2,22 @@ import { Request, Response } from 'express';
 
 import UnauthorizedError from '../../../exceptions/UnauthorizedError';
 import ResponseError from '../../../http/requests/ResponseError';
-import Auth from '../../../services/Auth';
+import Auth from '../services/Auth';
 
 export default async (req: Request, res: Response): Promise<void> => {
     try {
         const { email, password } = req?.body ?? {};
         let token;
 
-        token = await Auth.getInstance().login(email, password);
+        token = await Auth.getInstance().attemptCredentials(email, password);
 
-        res.send({ success: true, token })
+        const user = await Auth.getInstance().userRepository.findByEmail(email);
+
+        res.send({ 
+            success: true,
+            token,
+            user: user?.getData({ excludeGuarded: true })
+         })
     }
     catch (error) {
         if(error instanceof UnauthorizedError) {

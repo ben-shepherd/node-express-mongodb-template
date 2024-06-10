@@ -1,10 +1,10 @@
+import BaseProvider from "../base/Provider";
+import MongoDB from "../domains/database/services/MongoDB";
 import IMongoDbConfig from "../interfaces/IMongoDbConfig";
-import MongoDB from "../services/MongoDB";
-import Provider from "../base/Provider";
 
-export default class MongoDBProvider extends Provider
+export default class MongoDBProvider extends BaseProvider
 {
-    protected configPath: string = 'src/config/database/mongodb';
+    protected configPath: string = '@config/database/mongodb';
     protected config!: IMongoDbConfig;
 
     constructor() {
@@ -21,8 +21,7 @@ export default class MongoDBProvider extends Provider
     {
         this.log('Booting MongoDBProvider');
 
-        await MongoDB.getInstance(this.config).connect();
-        
-        this.log('Database connected successfully');
+        await MongoDB.getInstance(this.config).connectDefaultConnection();
+        await MongoDB.getInstance().connectKeepAlive()
     }
 }

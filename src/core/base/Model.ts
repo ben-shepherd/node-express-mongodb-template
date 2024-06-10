@@ -1,10 +1,10 @@
-import { ObjectId } from 'mongodb';
+import { Db, ObjectId } from 'mongodb';
 
-import BelongsTo from '../domains/Database/Relationships/BelongsTo';
-import HasMany from '../domains/Database/Relationships/HasMany';
+import BelongsTo from '../domains/database/relationships/BelongsTo';
+import HasMany from '../domains/database/relationships/HasMany';
+import MongoDB from '../domains/database/services/MongoDB';
 import IData from '../interfaces/IData';
 import { GetDataOptions, IModel } from '../interfaces/IModel';
-import MongoDB from '../services/MongoDB';
 
 export interface BaseModelData {
     _id?: ObjectId
@@ -14,6 +14,9 @@ export interface BaseModelData {
 }
 
 export default class Model<TModelData extends BaseModelData> implements IModel {
+    // The database connection
+    public connection: string = 'default';
+
     // Primary identifier
     public primaryKey: string = '_id';
 
@@ -37,6 +40,10 @@ export default class Model<TModelData extends BaseModelData> implements IModel {
      */
     constructor(data: TModelData | null) {
         this.data = data;
+    }
+
+    protected getDb(): Db {
+        return MongoDB.getInstance().getDb(this.connection);
     }
 
     /**
@@ -97,11 +104,10 @@ export default class Model<TModelData extends BaseModelData> implements IModel {
      */
     async refresh(): Promise<IData | null> {
         if(!this.data) return null;
-        this.data = await MongoDB
-            .getInstance()
-            .getDb()
-            .collection(this.collection)
+
+        this.data = await this.getDb().collection(this.collection)
             .findOne({ [this.primaryKey]: this.getId() }) as TModelData | null ?? null;
+
         return this.data
     }
 
@@ -113,10 +119,10 @@ export default class Model<TModelData extends BaseModelData> implements IModel {
      */
     async update(): Promise<void> {
         if(!this.getId()) return;
-        await MongoDB.getInstance()
-        .getDb()
-        .collection(this.collection)
-        .updateOne({ [this.primaryKey]: this.getId() }, { $set: this.data as IData });
+
+        await this.getDb()
+            .collection(this.collection)
+            .updateOne({ [this.primaryKey]: this.getId() }, { $set: this.data as IData });
     }
     
     /**
@@ -127,10 +133,9 @@ export default class Model<TModelData extends BaseModelData> implements IModel {
      */
     async save(): Promise<void> {
         if(this.data && !this.getId()) {
-            await MongoDB.getInstance()
-            .getDb()
-            .collection(this.collection)
-            .insertOne(this.data);
+            await this.getDb()
+                .collection(this.collection)
+                .insertOne(this.data);
             await this.refresh();
             return;
         }
@@ -146,7 +151,7 @@ export default class Model<TModelData extends BaseModelData> implements IModel {
      */
     async delete(): Promise<void> {
         if(!this.data) return;
-        await MongoDB.getInstance().getDb().collection(this.collection).deleteOne({ [this.primaryKey]: this.getId() })
+        await this.getDb().collection(this.collection).deleteOne({ [this.primaryKey]: this.getId() })
         this.data = null
     }
 
@@ -172,7 +177,7 @@ export default class Model<TModelData extends BaseModelData> implements IModel {
     ): Promise<ForeignModel | null> 
     {
         const data = await new BelongsTo<LocalData, LocalModel, ForeignData>().handle(model, new foreignModelCtor().collection, foreignKey, localKey)
-
+        
         if(!data) return null
 
         return new foreignModelCtor(data)

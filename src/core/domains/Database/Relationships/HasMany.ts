@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import Model, { BaseModelData } from "../../../base/Model";
-import MongoDB from "../../../services/MongoDB";
+import MongoDB from "../services/MongoDB";
 
 export default class BelongsTo<
     LocalData extends BaseModelData,
@@ -14,18 +14,9 @@ export default class BelongsTo<
             localKey = localKey.toString()
         }
 
-        console.log('HasMany handle',{
-            params: {
-                localModel,
-                foreignCollection,
-                foreignKey,
-                localKey
-            }
-        })
-
         return await MongoDB.getInstance()
             .getDb()
-            .collection(foreignCollection)
+            ?.collection(foreignCollection)
             .find({ [foreignKey]: localModel.getAttribute(localKey) })
             .toArray() as ForeignData[] | null
     }

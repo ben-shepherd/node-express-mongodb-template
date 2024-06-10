@@ -1,4 +1,4 @@
-import { ObjectId} from 'mongodb'
+import { ObjectId } from 'mongodb';
 import IData from '../../../interfaces/IData';
 
 export interface BaseUserData extends IData {
@@ -8,7 +8,7 @@ export interface BaseUserData extends IData {
     roles: string[]
 }
 
-export interface ApiTokenData extends IData {
+export interface BaseApiTokenData extends IData {
     _id?: ObjectId
     userId: ObjectId
     token: string
