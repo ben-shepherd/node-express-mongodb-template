@@ -66,8 +66,6 @@ import BaseProvider from '@src/core/base/Provider';
 import {IAuthConfig} from '@src/core/interfaces/IAuthConfig';
 import weatherRoutes
 
-'@src/app/routes/weather';
-
 export default class AppRouteProvider extends BaseProvider {
 
     // ...
